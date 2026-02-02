@@ -22,25 +22,25 @@ enum identity_provider {
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  email      String   @unique
-  name       String?
-  avatarUrl  String?  @map("avatar_url")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // relations
-  identities           Identity[]
-  passwordResetTokens  PasswordResetToken[]
-  groupMembers         GroupMember[]
-  expensesPaid         Expense[]       @relation("user_expenses_paid")
-  expensesDeleted      Expense[]       @relation("user_expenses_deleted")
-  expenseSplits        ExpenseSplit[]
-  settlementsFrom      Settlement[]    @relation("user_settlements_from")
-  settlementsTo        Settlement[]    @relation("user_settlements_to")
-  preferences          UserPreferences?
-  invitesSent          Invite[]        @relation("user_invites_sent")
-  expenseComments      ExpenseComment[]
+  identities          Identity[]
+  passwordResetTokens PasswordResetToken[]
+  groupMembers        GroupMember[]
+  expensesPaid        Expense[]            @relation("user_expenses_paid")
+  expensesDeleted     Expense[]            @relation("user_expenses_deleted")
+  expenseSplits       ExpenseSplit[]
+  settlementsFrom     Settlement[]         @relation("user_settlements_from")
+  settlementsTo       Settlement[]         @relation("user_settlements_to")
+  preferences         UserPreferences?
+  invitesSent         Invite[]             @relation("user_invites_sent")
+  expenseComments     ExpenseComment[]
 
   @@map("user")
 }
@@ -50,7 +50,7 @@ model Identity {
   provider       identity_provider
   providerUserId String            @map("provider_user_id")
   passwordHash   String?           @map("password_hash")
-  userId         String            @db.Uuid @map("user_id")
+  userId         String            @map("user_id") @db.Uuid
   createdAt      DateTime          @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -61,12 +61,12 @@ model Identity {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @db.Uuid @map("user_id")
-  tokenHash String   @unique @map("token_hash")
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -90,8 +90,8 @@ model Group {
 }
 
 model GroupMember {
-  userId   String   @db.Uuid @map("user_id")
-  groupId  String   @db.Uuid @map("group_id")
+  userId   String   @map("user_id") @db.Uuid
+  groupId  String   @map("group_id") @db.Uuid
   joinedAt DateTime @default(now()) @map("joined_at")
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -104,21 +104,21 @@ model GroupMember {
 
 model Expense {
   id              String    @id @default(uuid()) @db.Uuid
-  groupId          String?   @db.Uuid @map("group_id")
-  paidByUserId     String    @db.Uuid @map("paid_by_user_id")
-  description      String
-  totalAmount      Decimal   @db.Numeric(18, 2) @map("total_amount")
-  currency         String
-  createdAt        DateTime  @default(now()) @map("created_at")
-  deletedAt        DateTime? @map("deleted_at")
-  deletedByUserId  String?   @db.Uuid @map("deleted_by_user_id")
+  groupId         String?   @map("group_id") @db.Uuid
+  paidByUserId    String    @map("paid_by_user_id") @db.Uuid
+  description     String
+  totalAmount     Decimal   @map("total_amount")
+  currency        String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedByUserId String?   @map("deleted_by_user_id") @db.Uuid
 
   group         Group? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   paidByUser    User   @relation("user_expenses_paid", fields: [paidByUserId], references: [id], onDelete: Restrict)
   deletedByUser User?  @relation("user_expenses_deleted", fields: [deletedByUserId], references: [id], onDelete: SetNull)
 
-  splits        ExpenseSplit[]
-  comments      ExpenseComment[]
+  splits   ExpenseSplit[]
+  comments ExpenseComment[]
 
   @@index([groupId], map: "ix_expense_group_id")
   @@index([paidByUserId], map: "ix_expense_paid_by_user_id")
@@ -127,13 +127,12 @@ model Expense {
 }
 
 model ExpenseSplit {
-  id        String   @id @default(uuid()) @db.Uuid
-  expenseId String   @db.Uuid @map("expense_id")
-  userId    String   @db.Uuid @map("user_id")
-  amount    Decimal  @db.Numeric(18, 2)
-
-  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String  @id @default(uuid()) @db.Uuid
+  expenseId String  @map("expense_id") @db.Uuid
+  userId    String  @map("user_id") @db.Uuid
+  amount    Decimal
+  expense   Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([expenseId, userId], map: "uq_expense_split_expense_id_user_id")
   @@index([expenseId], map: "ix_expense_split_expense_id")
@@ -143,10 +142,10 @@ model ExpenseSplit {
 
 model Settlement {
   id         String   @id @default(uuid()) @db.Uuid
-  groupId    String   @db.Uuid @map("group_id")
-  fromUserId String   @db.Uuid @map("from_user_id")
-  toUserId   String   @db.Uuid @map("to_user_id")
-  amount     Decimal  @db.Numeric(18, 2)
+  groupId    String   @map("group_id") @db.Uuid
+  fromUserId String   @map("from_user_id") @db.Uuid
+  toUserId   String   @map("to_user_id") @db.Uuid
+  amount     Decimal
   createdAt  DateTime @default(now()) @map("created_at")
 
   group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -160,8 +159,8 @@ model Settlement {
 }
 
 model UserPreferences {
-  userId                  String @id @db.Uuid @map("user_id")
-  notificationPreferences String @db.Text @map("notification_preferences")
+  userId                  String @id @map("user_id") @db.Uuid
+  notificationPreferences String @map("notification_preferences") @db.Text
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -169,12 +168,12 @@ model UserPreferences {
 }
 
 model Invite {
-  id            String   @id @default(uuid()) @db.Uuid
-  inviterUserId String   @db.Uuid @map("inviter_user_id")
-  invitedEmail  String   @map("invited_email")
-  groupId       String   @db.Uuid @map("group_id")
-  token         String   @unique
-  expiresAt     DateTime @map("expires_at")
+  id            String    @id @default(uuid()) @db.Uuid
+  inviterUserId String    @map("inviter_user_id") @db.Uuid
+  invitedEmail  String    @map("invited_email")
+  groupId       String    @map("group_id") @db.Uuid
+  token         String    @unique
+  expiresAt     DateTime  @map("expires_at")
   acceptedAt    DateTime? @map("accepted_at")
 
   inviterUser User  @relation("user_invites_sent", fields: [inviterUserId], references: [id], onDelete: Cascade)
@@ -188,8 +187,8 @@ model Invite {
 
 model ExpenseComment {
   id        String   @id @default(uuid()) @db.Uuid
-  expenseId String   @db.Uuid @map("expense_id")
-  userId    String   @db.Uuid @map("user_id")
+  expenseId String   @map("expense_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
   content   String   @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
